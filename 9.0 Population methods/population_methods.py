@@ -1,8 +1,9 @@
 import numpy as np
 from numpy.random import standard_cauchy, multivariate_normal, randint
 from typing import Callable
-from random import getrandbits, sample
+from random import getrandbits
 import random
+import matplotlib.pyplot as plt
 
 
 class SelectionMethods():
@@ -13,12 +14,29 @@ class SelectionMethods():
         pass
 
     def truncation_selection(self, y: list) -> list:
+        """
+        Este método seleciona os melhores k indivíduos da população (melhor score da  função objetiva) para então 
+        selecionar os pais dentro deste grupo de k. Pode haver repetição de pais.
+        
+        Args:
+            - y: lista de score da população
+
+        """
+        
         index = np.argsort(y)
-        index_pairs = [[index[randint(0, self.k)]
-                        for j in range(2)] for i in y]
+        index_pairs = [[index[randint(0, self.k)] for j in range(2)] for i in y]
         return index_pairs
 
     def tournament_selection(self, y: list) -> list:
+        """
+        Este método seleciona k indivíduos da população de forma aleatória e seleciona o melhor indivíduo deste
+        grupo de k. Pode haver repetição de pais.
+        
+        Args:
+            - y: lista de score da população
+
+
+        """
 
         def getparent(y: list):
             y = np.array(y)
@@ -30,6 +48,16 @@ class SelectionMethods():
         return index_pairs
 
     def roulette_wheel_selection(self, y: list) -> list:
+        """
+        Este método atribui probabilidade de seleção para cada indivíduo de acordo com o seu score. Para função
+        objetiva do tipo minimização, a probabilidade de seleção é inversamente proporsional ao score do indivíduo 
+        Para função objetiva do tipo maximização, é diretamente proporcional ao score do indivíduo.
+        
+        Args:
+            - y: lista de score da população
+
+        """
+        
         y = [(max(y) - yi) for yi in y]
         cum_probs = np.cumsum(y)/sum(y)
         index_pairs = [[np.searchsorted(cum_probs, np.random.random()), np.searchsorted(
@@ -69,10 +97,6 @@ class MutationMethods():
                      r else v for v in child]
         return mut_child
 
-    # def gaussian_mutation(self, child: list, sigma: float):
-    #     mut_child = child + np.random.randn(len(child)) * sigma
-    #     return mut_child
-
 
 class GeneticAlgorithm(SelectionMethods, CrossoverMethods, MutationMethods):
 
@@ -80,27 +104,9 @@ class GeneticAlgorithm(SelectionMethods, CrossoverMethods, MutationMethods):
         super().__init__(k=k)
         pass
 
-    def rand_population_normal(self: 'GeneticAlgorithm', m: int, mean: list, cov: list) -> np.array:
-        """
-        TBD
-
-        """
-        samples = multivariate_normal(mean, cov, size=m)
-        return samples
-
-    def rand_population_uniform(self: 'GeneticAlgorithm', m: int, a: list, b: list) -> np.array:
-        d = len(a)
-        _samples = ([a[i] + np.random.random(d) * (b[i] - a[i])
-                    for i in range(d) for j in range(m)])
-        samples = np.array([arr.tolist() for arr in _samples])
-        # samples = np.array(_).flatten().tolist()
-        return samples
-
-    def rand_population_cauchy(self, m: int, mean: list, scale: list) -> np.array:
-        n = len(mean)
-        sample = np.array([[standard_cauchy() * scale[j] + mean[j]
-                          for j in range(n)] for i in range(m)])
-        return sample
+    def rand_population_binary(self, m: int) -> list:
+        rand_bit_pop = [getrandbits(1) for i in range(m)]
+        return rand_bit_pop
 
     def genetic_algorithm(f: Callable, select: Callable, crossover: Callable, mutate: Callable, population: list, k_max: int) -> list:
         for k in range(k_max):
@@ -111,6 +117,39 @@ class GeneticAlgorithm(SelectionMethods, CrossoverMethods, MutationMethods):
         new_poulation = population[np.argmin(f(population))]
         return new_poulation
 
-    def generate_rand_bit_population(self, m: int) -> list:
-        rand_bit_pop = [getrandbits(1) for i in range(m)]
-        return rand_bit_pop
+
+
+class GeneratePopulations():
+
+    def __init__(self) -> None:
+        pass
+
+    def rand_population_normal(self: 'GeneratePopulations', m: int, mean: list, cov: list) -> np.array:
+        """
+        TBD
+
+        """
+        samples = multivariate_normal(mean, cov, size=m)
+        return samples
+
+    def rand_population_uniform(self: 'GeneticAlgorithm', m: int, a: list, b: list) -> np.array:
+        d = len(a)
+        _samples = ([a[i] + np.random.random(d) * (b[i] - a[i]) for i in range(d) for j in range(m)])
+        samples = np.array([arr.tolist() for arr in _samples])
+        return samples
+
+    def rand_population_cauchy(self, m: int, mean: list, scale: list) -> np.array:
+        n = len(mean)
+        samples = np.array([[standard_cauchy() * scale[j] + mean[j] for j in range(n)] for i in range(m)])
+        return samples
+
+    def plot_distribution(self, pop_data: list, title: str) -> None:
+
+        plt.scatter(pop_data[:, 0], pop_data[:, 1], s=10)
+        plt.xlim(-4, 4)
+        plt.ylim(-4, 4)
+        plt.xlabel('X Axis')
+        plt.ylabel('Y Axis')
+        plt.title(title)
+        plt.show()
+        return None
