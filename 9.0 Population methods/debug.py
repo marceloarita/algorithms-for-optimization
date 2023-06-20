@@ -2,31 +2,50 @@
 %autoreload 2
 
 from population_methods import *
-random.seed(42)
+random.seed(0)
 
 gp = GeneratePopulations()
 
-# Uniform
-m = 1000
-a = [-2, -2]
-b = [2, 2]
-pop_uniform = gp.rand_population_uniform(m, a, b)
-gp.plot_distribution(pop_data=pop_uniform, title='Uniform distribution')
+m = 100
+a = [-3, 3]
+b = [3,3]
+
+population = gp.rand_population_uniform(m=1000, a=a, b=b)
+gp.plot_distribution(pop_data=population, title='Uniform distribution')
 
 
-# Normal
-mean = [0,0]
-cov = [[1,0],[0,1]]
-pop_normal = gp.rand_population_normal(m, mean, cov)
-gp.plot_distribution(pop_data=pop_normal, title='Normal distribution')
+S = SelectionMethods(k=10).roulette_wheel_selection
+C = CrossoverMethods().single_point_crossover
+M = MutationMethods().gauss_mutation
+f = TestFunctions.michalewicz
 
-# Cauchy
-scale = [1, 1]
-pop_cauchy = gp.rand_population_cauchy(m, mean, scale)
-gp.plot_distribution(pop_data=pop_cauchy, title='Cauchy distribution')
+def genetic_algorithm(f: Callable, select: Callable, crossover: Callable, mutate: Callable, population: list, 
+                    k_max: int) -> list:
+    for k in range(k_max):
+        y = [f(i) for i in population]
+        parents = select(y=y)
+        children = [crossover(parent_1=population[p[0]], parent_2=population[p[1]]) for p in parents]
+        population = [mutate(sigma=0.1, child=child) for child in children]
+    y_final = [f(i) for i in population]
+    best_population = population[np.argmin(y_final)]
+    return best_population
+
+best_population = genetic_algorithm(f=f, select=S, crossover=C, mutate=M, population=population, k_max=100)
+best_population
+
+x = [population[i][0] for i in range(len(population))]
+y = [population[i][1] for i in range(len(population))]
+X, Y = np.meshgrid(x, y)
+Z = f([X, Y])
+z = [f(i) for i in population]
 
 
-ga = GeneticAlgorithm(k=10)
+# Generate multiple sets of dots for each frame
+num_frames = 100
+# Create a contour plot
+fig, ax = plt.subplots(figsize=(8, 6))
+contour = ax.contourf(x, y, z, cmap='viridis')
+cbar = plt.colorbar(contour)
+cbar.ax.set_ylabel('Function Value')
 
-bit_population = ga.rand_population_binary(m=10)
-bit_population
+

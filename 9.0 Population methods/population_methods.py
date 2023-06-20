@@ -4,7 +4,21 @@ from typing import Callable
 from random import getrandbits
 import random
 import matplotlib.pyplot as plt
+import math
 
+
+class TestFunctions():
+
+    def __init__(self) -> None:
+        pass
+    
+    def michalewicz(x:list, m:int=10):
+        
+        # x = [2.20, 1.57] -> result = -1.8011
+        result = 0
+        for i, v in enumerate(x):
+            result -= np.sin(v) * np.sin((i+1) * v**2 / np.pi)**(2 * m)
+        return result
 
 class SelectionMethods():
 
@@ -82,8 +96,7 @@ class CrossoverMethods():
         return new_one
 
     def uniform_crossover(self, parent_1: list, parent_2: list) -> list:
-        new_one = [parent_2[i] if random.random() < 0.5 else parent_1[i]
-                   for i in range(len(parent_1))]
+        new_one = [parent_2[i] if random.random() < 0.5 else parent_1[i] for i in range(len(parent_1))]
         return new_one
 
 
@@ -92,10 +105,24 @@ class MutationMethods():
     def __init__(self) -> None:
         pass
 
-    def bit_wise_mutation(self, child: list, r: float):
-        mut_child = [abs(1-v) if np.random.random() <
-                     r else v for v in child]
+    def bit_wise_mutation(self, child: list, r: float) -> list:
+        """
+        Realiza uma mutação de bits em um indivíduo de uma população.
+
+        Args:
+            child (list): Indivíduo a ser mutado, representado como uma lista de bits.
+            r (float): Taxa de mutação, que determina a probabilidade de um bit ser mutado.
+
+        Returns:
+            list: Indivíduo mutado, representado como uma lista de bits.
+
+        """
+        
+        mut_child = [abs(1-v) if np.random.random() < r else v for v in child]
         return mut_child
+
+    def gauss_mutation(self, sigma: float, child: list) -> list:
+        return child + np.random.randn(len(child)) * sigma
 
 
 class GeneticAlgorithm(SelectionMethods, CrossoverMethods, MutationMethods):
@@ -108,13 +135,15 @@ class GeneticAlgorithm(SelectionMethods, CrossoverMethods, MutationMethods):
         rand_bit_pop = [getrandbits(1) for i in range(m)]
         return rand_bit_pop
 
-    def genetic_algorithm(f: Callable, select: Callable, crossover: Callable, mutate: Callable, population: list, k_max: int) -> list:
+    def genetic_algorithm(self, f: Callable, select: Callable, crossover: Callable, mutate: Callable, population: list, k_max: int) -> list:
         for k in range(k_max):
-            parents = select(y=f(population))
+            y = [f(i) for i in population]
+            parents = select(y=y)
             children = [crossover(parent_1=population[p[0]], parent_2=population[p[1]]) for p in parents]
-            population = [mutate(child, r=0.5) for child in children]
+            population = [mutate(sigma=0.1, child=child) for child in children]
         # new_poulation = population[min(range(len(population)), key=lambda i: f(population[i]))]
-        new_poulation = population[np.argmin(f(population))]
+        y_final = [f(i) for i in population]
+        new_poulation = population[np.argmin(y_final)]
         return new_poulation
 
 
@@ -134,7 +163,7 @@ class GeneratePopulations():
 
     def rand_population_uniform(self: 'GeneticAlgorithm', m: int, a: list, b: list) -> np.array:
         d = len(a)
-        _samples = ([a[i] + np.random.random(d) * (b[i] - a[i]) for i in range(d) for j in range(m)])
+        _samples = ([a[i] + np.random.random(d) * (b[i] - a[i]) for i in range(d) for _ in range(m)])
         samples = np.array([arr.tolist() for arr in _samples])
         return samples
 
