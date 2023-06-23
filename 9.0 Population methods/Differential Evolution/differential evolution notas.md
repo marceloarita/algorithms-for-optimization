@@ -1,6 +1,6 @@
 # Differential Evolution - Notas de estudo
 
-Escrito por Marcelo Arita
+Escrito por Marcelo Arita \
 Atualizado em: 2023-06-23
 
 Ref: https://machinelearningmastery.com/differential-evolution-from-scratch-in-python/
@@ -21,7 +21,7 @@ gerados aleatoriamente e itera sobre essa população para explorar novas soluç
 ponderada entre vetores individuais selecionados aleatoriamente. A mutação gera um novo vetor no espaço de busca, que 
 representa uma solução candidata modificada.
 - Crossover: o vetor mutado é recombinado com o vetor original para criar um vetor filho, a fim de criar variabilidade 
-no espaço de busca..
+no espaço de busca.
 -  Seleção: o vetor filho é comparado com o vetor original do indivíduo de acordo com a função objetivo. Aquele com 
 melhor desempenho será selecionado (mantido) para a próxima geração.
 
